@@ -12,14 +12,19 @@ import java.util.stream.Stream;
  * generating markdown files for Java source code.
  */
 public class FileHandling {
-
+    public static Integer fileCountMain = 0;
+    public static Integer fileCountTest = 0;
     // Path to the scheduler directory
-    public static final String BASE_FOLDER_PATH = "C:\\Users\\GirishHiremath\\Downloads\\scheduler\\scheduler\\";
+    public static final String BASE_FOLDER_PATH = "C:\\Users\\gengi\\Documents\\llm-test-projects\\property-management\\";
     public static final String MAIN_MD_FILE_NAME = "main.md";
     public static final String TEST_MD_FILE_NAME = "test.md";
 
     public static void main(String[] args) {
         processBaseFolder(BASE_FOLDER_PATH);
+        System.out.println("Total files processed: " + fileCountMain);
+        System.out.println("Total files processed: " + fileCountTest);
+        fileCountMain = 0;
+        fileCountTest = 0;
     }
 
     /**
@@ -29,7 +34,8 @@ public class FileHandling {
      */
     private static void processBaseFolder(String baseFolderPath) {
         try (Stream<Path> paths = Files.list(Paths.get(baseFolderPath))) {
-            paths.forEach(path -> {
+            List<Path> sortedPaths = paths.sorted().toList();
+            sortedPaths.forEach(path -> {
                 if (Files.isDirectory(path)) {
                     handleDirectory(path);
                 } else {
@@ -87,11 +93,16 @@ public class FileHandling {
      * @return the output file path
      */
     private static String getOutputFilePath(String inputFilePath) {
-        if (inputFilePath.contains("Test")) {
-            return BASE_FOLDER_PATH + File.separator + TEST_MD_FILE_NAME;
-        } else {
-            return BASE_FOLDER_PATH + File.separator + MAIN_MD_FILE_NAME;
+        if (inputFilePath.endsWith(".java")) {
+            if (inputFilePath.contains("Test")) {
+                fileCountTest++;
+                return BASE_FOLDER_PATH + File.separator + TEST_MD_FILE_NAME;
+            } else {
+                fileCountMain++;
+                return BASE_FOLDER_PATH + File.separator + MAIN_MD_FILE_NAME;
+            }
         }
+        return null;
     }
 
     /**
@@ -103,9 +114,20 @@ public class FileHandling {
      */
     private static String generateMarkdownContent(String inputFilePath, List<String> lines) {
         StringBuilder markdownContent = new StringBuilder();
+        String fileName = String.valueOf(Paths.get(inputFilePath).getFileName());
+        Integer fileCount = fileName.contains("Test") ? fileCountTest : fileCountMain;
         markdownContent.append("**")
-            .append(inputFilePath.replace(BASE_FOLDER_PATH, ""))
-            .append("**\n\n");
+                .append(fileCount)
+                .append(".")
+                .append("**")
+                .append("  ");
+        markdownContent.append("**``")
+                .append(fileName)
+                .append("``**");
+        markdownContent.append(": ");
+        markdownContent.append("**")
+                .append(inputFilePath.replace(BASE_FOLDER_PATH, ""))
+                .append("**\n\n");
         markdownContent.append("```java\n");
         lines.forEach(line -> markdownContent.append(line).append("\n"));
         markdownContent.append("```\n\n");
